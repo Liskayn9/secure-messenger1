@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Messenger</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-light: #ffffff;
+            --bg-dark: #1f2937;
+            --text-light: #374151;
+            --text-dark: #f9fafb;
+            --border-light: #e5e7eb;
+            --border-dark: #374151;
+            --sidebar-light: #f9fafb;
+            --sidebar-dark: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-light);
+            overflow: hidden;
+        }
+
+        body.dark-theme {
+            background: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        /* Auth Styles */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .auth-box {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            transform: translateY(0);
+            animation: slideUp 0.6s ease;
+        }
+
+        .dark-theme .auth-box {
+            background: rgba(31, 41, 55, 0.95);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .dark-theme .auth-tabs {
+            background: #374151;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .dark-theme .form-input {
+            background: #374151;
+            border-color: #4b5563;
+            color: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+            height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-light);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark-theme .header {
+            background: var(--bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        .main-content {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 350px;
+            background: var(--sidebar-light);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark-theme .sidebar {
+            background: var(--sidebar-dark);
+            border-color: var(--border-dark);
+        }
+
+        .search-container {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .dark-theme .search-container {
+            border-color: var(--border-dark);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-light);
+            border-radius: 25px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .dark-theme .search-input {
+            background: #374151;
+            border-color: var(--border-dark);
+            color: white;
+        }
+
+        .chats-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-item {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateX(5px);
+        }
+
+        .chat-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .chat-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .chat-info {
+            flex: 1;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .chat-last-message {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-light);
+        }
+
+        .dark-theme .chat-header {
+            background: var(--bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--bg-light);
+        }
+
+        .dark-theme .messages-container {
+            background: var(--bg-dark);
+        }
+
+        .message {
+            max-width: 70%;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            animation: messageSlide 0.3s ease;
+        }
+
+        .message.incoming {
+            background: var(--sidebar-light);
+            border-bottom-left-radius: 4px;
+            margin-right: auto;
+        }
+
+        .dark-theme .message.incoming {
+            background: #374151;
+        }
+
+        .message.outgoing {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+
+        .message-input-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-light);
+            background: var(--bg-light);
+        }
+
+        .dark-theme .message-input-container {
+            background: var(--bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        .message-input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 1px solid var(--border-light);
+            border-radius: 25px;
+            background: var(--bg-light);
+            font-size: 14px;
+        }
+
+        .dark-theme .message-input {
+            background: #374151;
+            border-color: var(--border-dark);
+            color: white;
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        /* Notifications */
+        .notifications-panel {
+            position: fixed;
+            top: 80px;
+            right: 25px;
+            width: 350px;
+            background: var(--bg-light);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+        }
+
+        .dark-theme .notifications-panel {
+            background: var(--bg-dark);
+            border-color: var(--border-dark);
+        }
+
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dark-theme .notification-item {
+            border-color: var(--border-dark);
+        }
+
+        /* Theme Slider */
+        .theme-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            width: 50px;
+            height: 25px;
+            background: #cbd5e1;
+            border-radius: 25px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dark-theme .slider {
+            background: #4b5563;
+        }
+
+        .slider::before {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider.dark::before {
+            transform: translateX(25px);
+            background: #1f2937;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* User ID Badge */
+        .user-id {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .dark-theme .user-id {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+        }
+
+        /* Online Status */
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            margin-left: auto;
+        }
+
+        /* Sound Effects */
+        .click-sound {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <!-- Sound Effects -->
+    <audio id="clickSound" class="click-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="messageSound" class="click-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Auth Section -->
+    <div id="authSection" class="auth-container">
+        <div class="auth-box">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Вход</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Регистрация</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form active">
+                <div class="form-group">
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Логин" onkeypress="playClickSound()">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Пароль" onkeypress="playClickSound()">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rememberMe" class="checkbox" onchange="playClickSound()">
+                    <label for="rememberMe">Запомнить меня</label>
+                </div>
+                <button class="btn btn-primary" onclick="login()" onmousedown="playClickSound()">
+                    Войти в аккаунт
+                </button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <input type="text" id="registerUsername" class="form-input" placeholder="Придумайте логин" onkeypress="playClickSound()">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Придумайте пароль" onkeypress="playClickSound()">
+                </div>
+                <button class="btn btn-primary" onclick="register()" onmousedown="playClickSound()">
+                    Создать аккаунт
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appSection" class="app-container">
+        <header class="header">
+            <div class="header-left">
+                <h1 style="font-size: 24px; font-weight: 700;">Secure Messenger</h1>
+            </div>
+            <div class="header-right" style="display: flex; align-items: center; gap: 20px;">
+                <div class="theme-slider">
+                    <i class="fas fa-sun" style="color: #f59e0b;"></i>
+                    <div class="slider" onclick="toggleTheme()" onmousedown="playClickSound()"></div>
+                    <i class="fas fa-moon" style="color: #6366f1;"></i>
+                </div>
+                <div class="user-id" id="userIDDisplay">ID: --------</div>
+                <button class="btn" onclick="showNotifications()" onmousedown="playClickSound()" 
+                        style="background: none; border: none; color: inherit; font-size: 20px;">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="btn" onclick="logout()" onmousedown="playClickSound()"
+                        style="background: none; border: none; color: inherit; font-size: 20px;">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="search-container">
+                    <input type="text" id="searchUserID" class="search-input" placeholder="Поиск по ID пользователя..." onkeypress="playClickSound()">
+                </div>
+                <div class="chats-list" id="chatsList">
+                    <!-- Chats will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <div class="chat-header">
+                    <h2 id="currentChatName">Выберите чат</h2>
+                </div>
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Messages will be loaded here -->
+                </div>
+                <div class="message-input-container">
+                    <div class="message-input-wrapper">
+                        <input type="text" id="messageInput" class="message-input" placeholder="Введите сообщение..." disabled onkeypress="handleMessageKeypress(event)">
+                        <button class="send-btn" onclick="sendMessage()" onmousedown="playClickSound()" disabled id="sendMessageBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="notifications-panel" id="notificationsPanel">
+            <div style="padding: 15px; border-bottom: 1px solid var(--border-light); font-weight: 600;">
+                Уведомления
+            </div>
+            <div id="notificationsList">
+                <!-- Notifications will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        class SecureMessenger {
+            constructor() {
+                this.API_BASE = window.location.origin + '/api';
+                this.user = null;
+                this.token = localStorage.getItem('token');
+                this.currentChat = null;
+                this.socket = null;
+                this.friends = [];
+                this.notifications = [];
+                
+                this.init();
+            }
+
+            async init() {
+                if (this.token) {
+                    await this.loadUserData();
+                } else {
+                    this.showAuth();
+                }
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.getElementById('searchUserID').addEventListener('input', (e) => this.searchUser(e.target.value));
+            }
+
+            async loadUserData() {
+                try {
+                    const response = await fetch(this.API_BASE + '/user/profile', {
+                        headers: { 'Authorization': 'Bearer ' + this.token }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.user = data.user;
+                        this.showApp();
+                        this.loadFriends();
+                        this.loadNotifications();
+                        this.connectSocket();
+                        this.applyTheme(this.user.theme);
+                    } else {
+                        this.showAuth();
+                    }
+                } catch (error) {
+                    this.showAuth();
+                }
+            }
+
+            async login(username, password, rememberMe) {
+                try {
+                    const response = await fetch(this.API_BASE + '/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password, rememberMe })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.token = data.token;
+                        this.user = data.user;
+                        localStorage.setItem('token', this.token);
+                        this.showApp();
+                        this.loadFriends();
+                        this.loadNotifications();
+                        this.connectSocket();
+                        this.applyTheme(this.user.theme);
+                        return true;
+                    } else {
+                        this.showError(data.error);
+                        return false;
+                    }
+                } catch (error) {
+                    this.showError('Ошибка соединения');
+                    return false;
+                }
+            }
+
+            async register(username, password) {
+                try {
+                    const response = await fetch(this.API_BASE + '/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.token = data.token;
+                        this.user = data.user;
+                        localStorage.setItem('token', this.token);
+                        this.showApp();
+                        this.loadFriends();
+                        this.connectSocket();
+                        this.applyTheme(this.user.theme);
+                        this.showSuccess('Аккаунт создан! Ваш ID: ' + this.user.userid);
+                        return true;
+                    } else {
+                        this.showError(data.error);
+                        return false;
+                    }
+                } catch (error) {
+                    this.showError('Ошибка соединения');
+                    return false;
+                }
+            }
+
+            async loadFriends() {
+                try {
+                    const response = await fetch(this.API_BASE + '/friends', {
+                        headers: { 'Authorization': 'Bearer ' + this.token }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.friends = data.friends;
+                        this.displayFriends();
+                    }
+                } catch (error) {
+                    console.error('Error loading friends:', error);
+                }
+            }
+
+            displayFriends() {
+                const chatsList = document.getElementById('chatsList');
+                chatsList.innerHTML = '';
+
+                this.friends.forEach(friend => {
+                    const chatElement = document.createElement('div');
+                    chatElement.className = 'chat-item';
+                    chatElement.onclick = () => this.openChat(friend);
+                    
+                    chatElement.innerHTML = `
+                        <div class="chat-avatar">${friend.username.charAt(0).toUpperCase()}</div>
+                        <div class="chat-info">
+                            <div class="chat-name">${friend.username}</div>
+                            <div class="chat-last-message">ID: ${friend.userid}</div>
+                        </div>
+                        ${friend.isOnline ? '<div class="online-dot"></div>' : ''}
+                    `;
+                    
+                    chatsList.appendChild(chatElement);
+                });
+            }
+
+            async searchUser(userid) {
+                if (userid.length !== 8) return;
+
+                try {
+                    const response = await fetch(this.API_BASE + '/friends/request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token
+                        },
+                        body: JSON.stringify({ userid })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.showSuccess('Запрос в друзья отправлен!');
+                        document.getElementById('searchUserID').value = '';
+                        this.loadNotifications();
+                    } else {
+                        this.showError(data.error);
+                    }
+                } catch (error) {
+                    this.showError('Ошибка отправки запроса');
+                }
+            }
+
+            async loadNotifications() {
+                try {
+                    const response = await fetch(this.API_BASE + '/friends/requests', {
+                        headers: { 'Authorization': 'Bearer ' + this.token }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.notifications = data.requests;
+                        this.displayNotifications();
+                    }
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+
+            displayNotifications() {
+                const notificationsList = document.getElementById('notificationsList');
+                notificationsList.innerHTML = '';
+
+                this.notifications.forEach(notification => {
+                    const notificationElement = document.createElement('div');
+                    notificationElement.className = 'notification-item';
+                    
+                    notificationElement.innerHTML = `
+                        <div>
+                            <div style="font-weight: 600;">${notification.from.username}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">ID: ${notification.from.userid}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="messenger.respondToRequest('${notification._id}', true)" 
+                                    onmousedown="playClickSound()"
+                                    style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+                                ✓
+                            </button>
+                            <button onclick="messenger.respondToRequest('${notification._id}', false)" 
+                                    onmousedown="playClickSound()"
+                                    style="background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer;">
+                                ✕
+                            </button>
+                        </div>
+                    `;
+                    
+                    notificationsList.appendChild(notificationElement);
+                });
+            }
+
+            async respondToRequest(requestId, accept) {
+                try {
+                    const response = await fetch(this.API_BASE + '/friends/respond', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token
+                        },
+                        body: JSON.stringify({ requestId, accept })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.loadNotifications();
+                        this.loadFriends();
+                        this.showSuccess(accept ? 'Запрос принят!' : 'Запрос отклонен');
+                    }
+                } catch (error) {
+                    this.showError('Ошибка');
+                }
+            }
+
+            async openChat(friend) {
+                this.currentChat = friend;
+                document.getElementById('currentChatName').textContent = friend.username;
+                document.getElementById('messageInput').disabled = false;
+                document.getElementById('sendMessageBtn').disabled = false;
+                
+                await this.loadMessages(friend.id);
+            }
+
+            async loadMessages(friendId) {
+                try {
+                    const response = await fetch(this.API_BASE + '/messages/' + friendId, {
+                        headers: { 'Authorization': 'Bearer ' + this.token }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.displayMessages(data.messages);
+                    }
+                } catch (error) {
+                    console.error('Error loading messages:', error);
+                }
+            }
+
+            displayMessages(messages) {
+                const container = document.getElementById('messagesContainer');
+                container.innerHTML = '';
+
+                messages.forEach(message => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = `message ${message.from.username === this.user.username ? 'outgoing' : 'incoming'}`;
+                    messageElement.innerHTML = `
+                        <div>${message.message}</div>
+                    `;
+                    container.appendChild(messageElement);
+                });
+                
+                container.scrollTop = container.scrollHeight;
+            }
+
+            sendMessage() {
+                const input = document.getElementById('messageInput');
+                const message = input.value.trim();
+
+                if (!message || !this.currentChat) return;
+
+                if (this.socket) {
+                    this.socket.emit('send_message', {
+                        to: this.currentChat.id,
+                        message: message
+                    });
+
+                    // Add message immediately for better UX
+                    const container = document.getElementById('messagesContainer');
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'message outgoing';
+                    messageElement.innerHTML = `<div>${message}</div>`;
+                    container.appendChild(messageElement);
+                    container.scrollTop = container.scrollHeight;
+
+                    playMessageSound();
+                }
+
+                input.value = '';
+            }
+
+            connectSocket() {
+                if (!this.token) return;
+
+                this.socket = io({
+                    auth: { token: this.token }
+                });
+
+                this.socket.on('new_message', (messageData) => {
+                    if (this.currentChat && messageData.from === this.currentChat.username) {
+                        const container = document.getElementById('messagesContainer');
+                        const messageElement = document.createElement('div');
+                        messageElement.className = 'message incoming';
+                        messageElement.innerHTML = `<div>${messageData.message}</div>`;
+                        container.appendChild(messageElement);
+                        container.scrollTop = container.scrollHeight;
+                        playMessageSound();
+                    }
+                });
+            }
+
+            async updateTheme(theme) {
+                try {
+                    await fetch(this.API_BASE + '/user/theme', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token
+                        },
+                        body: JSON.stringify({ theme })
+                    });
+                } catch (error) {
+                    console.error('Error updating theme:', error);
+                }
+            }
+
+            applyTheme(theme) {
+                const body = document.body;
+                const slider = document.querySelector('.slider');
+                
+                if (theme === 'dark') {
+                    body.classList.add('dark-theme');
+                    body.classList.remove('light-theme');
+                    slider.classList.add('dark');
+                } else {
+                    body.classList.add('light-theme');
+                    body.classList.remove('dark-theme');
+                    slider.classList.remove('dark');
+                }
+            }
+
+            logout() {
+                localStorage.removeItem('token');
+                this.token = null;
+                this.user = null;
+                if (this.socket) this.socket.disconnect();
+                this.showAuth();
+            }
+
+            showAuth() {
+                document.getElementById('authSection').style.display = 'flex';
+                document.getElementById('appSection').style.display = 'none';
+            }
+
+            showApp() {
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('appSection').style.display = 'block';
+                document.getElementById('userIDDisplay').textContent = 'ID: ' + this.user.userid;
+            }
+
+            showNotifications() {
+                const panel = document.getElementById('notificationsPanel');
+                panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            }
+
+            showError(message) {
+                alert('❌ ' + message);
+            }
+
+            showSuccess(message) {
+                alert('✅ ' + message);
+            }
+        }
+
+        // Global functions for HTML event handlers
+        let messenger;
+
+        function switchAuthTab(tab) {
+            playClickSound();
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            
+            document.querySelector(`.auth-tab[onclick="switchAuthTab('${tab}')"]`).classList.add('active');
+            document.getElementById(tab + 'Form').classList.add('active');
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
+            if (!username || !password) {
+                alert('Введите логин и пароль');
+                return;
+            }
+
+            const success = await messenger.login(username, password, rememberMe);
+            if (success) {
+                playMessageSound();
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+
+            if (!username || !password) {
+                alert('Введите логин и пароль');
+                return;
+            }
+
+            if (username.length < 3) {
+                alert('Логин должен содержать минимум 3 символа');
+                return;
+            }
+
+            const success = await messenger.register(username, password);
+            if (success) {
+                playMessageSound();
+            }
+        }
+
+        function logout() {
+            messenger.logout();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const slider = document.querySelector('.slider');
+            const isDark = body.classList.contains('dark-theme');
+            const newTheme = isDark ? 'light' : 'dark';
+            
+            messenger.applyTheme(newTheme);
+            messenger.updateTheme(newTheme);
+            playClickSound();
+        }
+
+        function showNotifications() {
+            messenger.showNotifications();
+        }
+
+        function sendMessage() {
+            messenger.sendMessage();
+        }
+
+        function handleMessageKeypress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function playClickSound() {
+            const sound = document.getElementById('clickSound');
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+        }
+
+        function playMessageSound() {
+            const sound = document.getElementById('messageSound');
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            messenger = new SecureMessenger();
+        });
+    </script>
+</body>
+</html>
