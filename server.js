@@ -7,8 +7,12 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
+console.log('🚀 Starting Secure Messenger...');
+
 const app = express();
 const server = http.createServer(app);
+
+// 🔥 ИСПРАВЛЕННЫЕ НАСТРОЙКИ CORS
 const io = socketIo(server, {
   cors: {
     origin: "*",
@@ -20,13 +24,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Подключение к MongoDB
+// 🔥 ИСПРАВЛЕННОЕ ПОДКЛЮЧЕНИЕ К MONGODB
 const MONGODB_URI = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017/secure-messenger';
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// Схемы
+console.log('🔗 Connecting to MongoDB...');
+console.log('MongoDB URI:', MONGODB_URI ? 'Present' : 'Missing');
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+  console.log('⚠️  Continuing without MongoDB...');
+});
+
+// Схемы и модели
 const userSchema = new mongoose.Schema({
   userid: { type: String, required: true, unique: true },
   username: { type: String, required: true, unique: true },
@@ -112,6 +126,7 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -156,6 +171,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -173,6 +189,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Profile error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -211,6 +228,7 @@ app.post('/api/friends/request', authenticateToken, async (req, res) => {
     
     res.json({ success: true, message: 'Запрос отправлен' });
   } catch (error) {
+    console.error('Friend request error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -224,6 +242,7 @@ app.get('/api/friends/requests', authenticateToken, async (req, res) => {
     
     res.json({ success: true, requests });
   } catch (error) {
+    console.error('Get requests error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -246,6 +265,7 @@ app.post('/api/friends/respond', authenticateToken, async (req, res) => {
       res.json({ success: true, message: 'Запрос отклонен' });
     }
   } catch (error) {
+    console.error('Respond error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -270,6 +290,7 @@ app.get('/api/friends', authenticateToken, async (req, res) => {
     
     res.json({ success: true, friends: friendsList });
   } catch (error) {
+    console.error('Get friends error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -289,6 +310,7 @@ app.get('/api/messages/:friendId', authenticateToken, async (req, res) => {
     
     res.json({ success: true, messages });
   } catch (error) {
+    console.error('Get messages error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
@@ -299,11 +321,12 @@ app.put('/api/user/theme', authenticateToken, async (req, res) => {
     await User.findByIdAndUpdate(req.user.userId, { theme });
     res.json({ success: true, message: 'Тема изменена' });
   } catch (error) {
+    console.error('Theme error:', error);
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
 
-// SPA fallback
+// 🔥 ВАЖНО: Обработчик для всех остальных маршрутов
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -371,7 +394,10 @@ io.on('connection', async (socket) => {
   });
 });
 
+// 🔥 ИСПРАВЛЕННЫЙ ЗАПУСК СЕРВЕРА
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
